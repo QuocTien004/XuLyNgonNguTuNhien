@@ -44,11 +44,16 @@ options = {
 if st.button("Xử lý dữ liệu"):
     st.write(NLPController.process_text(user_input_data, options))
 
-# --- BIỂU DIỄN VĂN BẢN ---
+# --- BIỂU DIỄN DỮ LIỆU ---
 st.subheader("4. Biểu diễn dữ liệu")
-method = st.selectbox("Chọn phương pháp:", ["One-Hot Encoding", "Bag of Words", "TF-IDF", "GloVe", "Bag of N-Grams"])
+method = st.selectbox("Chọn phương pháp:", ["One-Hot Encoding", "Bag of Words", "Bag of N-Grams", "TF-IDF", "GloVe", "FastText"])
 if st.button("Thực hiện mã hóa"):
-    st.write(NLPController.represent_text(user_input_data, method))
+    if user_input_data.strip():
+        result = NLPController.represent_text(user_input_data, method)
+        st.write("Kết quả mã hóa:")
+        st.dataframe(result)
+    else:
+        st.warning("Vui lòng nhập văn bản trước khi thực hiện mã hóa.")
 
 # --- PHÂN LOẠI DỮ LIỆU ---
 st.subheader("5. Phân loại dữ liệu")

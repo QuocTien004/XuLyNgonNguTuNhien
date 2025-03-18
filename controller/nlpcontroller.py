@@ -52,6 +52,8 @@ class NLPController:
             return TextRepresentation.glove_representation(text)
         elif method == "Bag of N-Grams":
             return TextRepresentation.bag_of_ngrams(text)
+        elif method == "FastText":
+            return TextRepresentation.fasttext_representation(text)
         return None
     
     #----------Phân loại dữ liệu----------
