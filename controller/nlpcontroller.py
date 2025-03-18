@@ -3,13 +3,23 @@ from model.representation import TextRepresentation
 from model.augmentation import TextAugmentation
 from model.data_collection import Data
 from model.text_classification import NaiveBayes
+from model.text_classification import MaximizingLikelihood
+from model.text_classification import SVM
 import numpy as np
 
 class NLPController:
+
+    #----------Cào dữ liệu----------
     @staticmethod
     def scrape_data(url):
         return Data.web_scraping(url)
 
+    #----------Tăng cường dữ liệu----------
+    @staticmethod
+    def augment_text(text, methods):
+        return TextAugmentation.augment_text(text, methods)
+
+    #----------Tiền xử lý dữ liệu----------
     @staticmethod
     def process_text(text, options):
         result = text
@@ -29,6 +39,7 @@ class NLPController:
             result = TextProcessing.fix_contractions(result)
         return result
 
+    #----------Biểu diễn dữ liệu----------
     @staticmethod
     def represent_text(text, method):
         if method == "One-Hot Encoding":
@@ -42,11 +53,9 @@ class NLPController:
         elif method == "Bag of N-Grams":
             return TextRepresentation.bag_of_ngrams(text)
         return None
-
-    @staticmethod
-    def augment_text(text, methods):
-        return TextAugmentation.augment_text(text, methods)
     
+    #----------Phân loại dữ liệu----------
+    #Naive Bayes
     @staticmethod
     def train_naive_bayes(train_data, labels):
         return NaiveBayes.train(train_data, labels)
@@ -57,3 +66,29 @@ class NLPController:
         predicted_class = model.predict(features_array)[0]
         predicted_proba = model.predict_proba(features_array)
         return predicted_class, predicted_proba
+
+    #Maximizing Likehood
+    @staticmethod
+    def train_maximizing_likelihood(train_data, labels):
+        return MaximizingLikelihood.train(train_data, labels)
+    
+    @staticmethod
+    def predict_maximizing_likelihood(model, features):
+        features_array = np.array([features])
+        predicted_class = model.predict(features_array)[0]
+        predicted_proba = model.predict_proba(features_array)
+        return predicted_class, predicted_proba
+    
+    #SVM
+    @staticmethod
+    def train_SVM(train_data, labels):
+        return SVM.train(train_data, labels)
+    
+    @staticmethod
+    def predict_SVM(model, features):
+        features_array = np.array([features])
+        predicted_class = model.predict([features])[0] 
+        predicted_proba = model.predict_proba([features])[0] 
+        return predicted_class, predicted_proba
+    
+    

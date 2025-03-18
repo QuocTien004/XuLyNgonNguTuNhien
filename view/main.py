@@ -52,82 +52,93 @@ if st.button("Thực hiện mã hóa"):
 
 # --- PHÂN LOẠI DỮ LIỆU ---
 st.subheader("5. Phân loại dữ liệu")
-classifier = st.selectbox("Chọn phương pháp phân loại:", ["Naive Bayes", "SVM", "Random Forest", "KNN"])
+classifier = st.selectbox("Chọn phương pháp phân loại:", ["Naive Bayes", "Maximizing Likelihood", "SVM"])
 
-if classifier == "Naive Bayes":
-    st.subheader("Naive Bayes Classification - Huấn luyện mô hình")
+# Khởi tạo session_state nếu chưa có
+if 'train_data' not in st.session_state:
+    st.session_state.train_data = []  
+if 'labels' not in st.session_state:
+    st.session_state.labels = []  
+if 'model' not in st.session_state:
+    st.session_state.model = None
 
-    if 'train_data' not in st.session_state:
-        st.session_state.train_data = []  
-    if 'labels' not in st.session_state:
-        st.session_state.labels = []  
+# --- Nhập dữ liệu ---
+st.subheader("Nhập Dữ Liệu Huấn Luyện")
+st.write("Nhập các vector")
 
-    # --- Nhập dữ liệu ---
-    st.subheader("Nhập Dữ Liệu Huấn Luyện")
-    st.write("Nhập các vector, mỗi dòng 1 vector, cách nhau bằng dấu phẩy hoặc khoảng trắng.")
+vector_text = st.text_area("Các phần tử cách nhau bằng dấu phẩy hoặc khoản trắng. Mỗi dòng là 1 vector", "")
 
-    vector_text = st.text_area("Nhập các vector (Mỗi dòng 1 vector)", "")
+if st.button("Lưu dữ liệu"):
+    vector_lines = vector_text.strip().split("\n")
+    processed_vectors = []
 
-    if st.button("Lưu dữ liệu"):
-        vector_lines = vector_text.strip().split("\n")
-        processed_vectors = []
+    try:
+        for line in vector_lines:
+            vector = list(map(float, line.replace(',', ' ').split()))
+            processed_vectors.append(vector)
 
+        if processed_vectors:
+            st.session_state.current_vectors = processed_vectors
+            st.success(f"Đã nhập {len(processed_vectors)} vector. Nhập nhãn để lưu!")
+        else:
+            st.warning("Vui lòng nhập ít nhất 1 vector.")
+    except ValueError:
+        st.error("Lỗi! Vui lòng nhập số hợp lệ.")
+
+if 'current_vectors' in st.session_state and st.session_state.current_vectors:
+    label = st.text_input("Nhập nhãn cho các vector vừa nhập", "")
+
+    if st.button("Lưu mẫu huấn luyện"):
+        if label.strip():
+            st.session_state.train_data.append(st.session_state.current_vectors)
+            st.session_state.labels.append(label)
+            st.session_state.current_vectors = []  
+            st.success(f"Đã lưu mẫu với nhãn '{label}'!")
+        else:
+            st.warning("Vui lòng nhập nhãn trước khi lưu!")
+
+# --- Hiển thị dữ liệu đã lưu ---
+st.subheader("Danh sách mẫu huấn luyện")
+for idx, (vectors, label) in enumerate(zip(st.session_state.train_data, st.session_state.labels)):
+    st.write(f"**Mẫu {idx + 1} (Nhãn: {label}):**")
+    for v_idx, vector in enumerate(vectors):
+        st.write(f"  - Vector {v_idx + 1}: {vector}")
+
+# --- Huấn luyện mô hình ---
+if st.button("Huấn luyện mô hình"):
+    if st.session_state.train_data:
+        X_train = [vector for sample in st.session_state.train_data for vector in sample]
+        y_train = [label for i, label in enumerate(st.session_state.labels) for _ in st.session_state.train_data[i]]
+
+        if classifier == "Naive Bayes":
+            st.session_state.model = NLPController.train_naive_bayes(np.array(X_train), np.array(y_train))
+            st.success("Mô hình Naive Bayes đã được huấn luyện thành công!")
+        elif classifier == "Maximizing Likelihood":
+            st.session_state.model = NLPController.train_maximizing_likelihood(np.array(X_train), np.array(y_train))
+            st.success("Mô hình Maximizing Likelihood đã được huấn luyện thành công!")
+        elif classifier == "SVM":
+            st.session_state.model = NLPController.train_SVM(np.array(X_train), np.array(y_train))
+            st.success("Mô hình SVM đã được huấn luyện thành công!")
+    else:
+        st.warning("Vui lòng nhập ít nhất một mẫu huấn luyện!")
+
+# --- Dự đoán ---
+if 'model' in st.session_state and st.session_state.model is not None:
+    st.subheader("Dự đoán dữ liệu mới")
+    input_text = st.text_input("Nhập vector cần dự đoán ", "")
+
+    if st.button("Dự đoán"):
         try:
-            for line in vector_lines:
-                vector = list(map(float, line.replace(',', ' ').split()))
-                processed_vectors.append(vector)
+            input_features = list(map(float, input_text.replace(',', ' ').split()))
+            if classifier == "Naive Bayes":
+                predicted_class, predicted_proba = NLPController.predict_naive_bayes(st.session_state.model, input_features)
+            elif classifier == "Maximizing Likelihood":
+                predicted_class, predicted_proba = NLPController.predict_maximizing_likelihood(st.session_state.model, input_features)
+            elif classifier == "SVM":
+                predicted_class, predicted_proba = NLPController.predict_SVM(st.session_state.model, input_features)
 
-            if processed_vectors:
-                st.session_state.current_vectors = processed_vectors
-                st.success(f"Đã nhập {len(processed_vectors)} vector. Nhập nhãn để lưu!")
-            else:
-                st.warning("Vui lòng nhập ít nhất 1 vector.")
+            st.write(f"**Kết quả dự đoán:** {predicted_class}")
+            st.write("**Xác suất cho từng lớp:**")
+            st.write(predicted_proba)
         except ValueError:
             st.error("Lỗi! Vui lòng nhập số hợp lệ.")
-
-    if 'current_vectors' in st.session_state and st.session_state.current_vectors:
-        label = st.text_input("Nhập nhãn cho các vector vừa nhập", "")
-
-        if st.button("Lưu mẫu huấn luyện"):
-            if label.strip():
-                st.session_state.train_data.append(st.session_state.current_vectors)
-                st.session_state.labels.append(label)
-                st.session_state.current_vectors = []  
-                st.success(f"Đã lưu mẫu với nhãn '{label}'!")
-            else:
-                st.warning("Vui lòng nhập nhãn trước khi lưu!")
-
-    # --- Hiển thị dữ liệu đã lưu ---
-    st.subheader("Danh sách mẫu huấn luyện")
-    for idx, (vectors, label) in enumerate(zip(st.session_state.train_data, st.session_state.labels)):
-        st.write(f"**Mẫu {idx + 1} (Nhãn: {label}):**")
-        for v_idx, vector in enumerate(vectors):
-            st.write(f"  - Vector {v_idx + 1}: {vector}")
-
-    # --- Huấn luyện mô hình ---
-    if st.button("Huấn luyện mô hình"):
-        if st.session_state.train_data:
-            X_train = [vector for sample in st.session_state.train_data for vector in sample]
-            y_train = [label for i, label in enumerate(st.session_state.labels) for _ in st.session_state.train_data[i]]
-
-            st.session_state.model = NLPController.train_naive_bayes(np.array(X_train), np.array(y_train))
-            st.success("Mô hình đã được huấn luyện thành công!")
-        else:
-            st.warning("Vui lòng nhập ít nhất một mẫu huấn luyện!")
-
-    # --- Dự đoán ---
-    if 'model' in st.session_state:
-        st.subheader("Dự đoán dữ liệu mới")
-        input_text = st.text_input("Nhập vector cần dự đoán ", "")
-
-        if st.button("Dự đoán"):
-            try:
-                input_features = list(map(float, input_text.replace(',', ' ').split()))
-                predicted_class, predicted_proba = NLPController.predict_naive_bayes(st.session_state.model, input_features)
-                st.write(f"**Kết quả dự đoán:** {predicted_class}")
-                st.write("**Xác suất cho từng lớp:**")
-                st.write(predicted_proba)
-            except ValueError:
-                st.error("Lỗi! Vui lòng nhập số hợp lệ.")
-else:
-    st.warning("Hiện tại chỉ hỗ trợ Naive Bayes. Các phương pháp khác sẽ được cập nhật sau.")
