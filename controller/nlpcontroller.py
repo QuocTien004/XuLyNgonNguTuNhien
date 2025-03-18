@@ -1,8 +1,15 @@
 from model.processing import TextProcessing
 from model.representation import TextRepresentation
 from model.augmentation import TextAugmentation
+from model.data_collection import Data
+from model.text_classification import NaiveBayes
+import numpy as np
 
 class NLPController:
+    @staticmethod
+    def scrape_data(url):
+        return Data.web_scraping(url)
+
     @staticmethod
     def process_text(text, options):
         result = text
@@ -39,3 +46,14 @@ class NLPController:
     @staticmethod
     def augment_text(text, methods):
         return TextAugmentation.augment_text(text, methods)
+    
+    @staticmethod
+    def train_naive_bayes(train_data, labels):
+        return NaiveBayes.train(train_data, labels)
+
+    @staticmethod
+    def predict_naive_bayes(model, features):
+        features_array = np.array([features])
+        predicted_class = model.predict(features_array)[0]
+        predicted_proba = model.predict_proba(features_array)
+        return predicted_class, predicted_proba
