@@ -120,6 +120,19 @@ class TextClassifier:
 
     def predict(self, text):
         """Dự đoán phân loại văn bản"""
+        if self.model is None:
+            raise ValueError("Mô hình chưa được train! Vui lòng huấn luyện trước khi dự đoán.")
+    
         X_text = self.vectorizer.transform([text])
-        prediction = self.model.predict(X_text)[0]
-        return prediction
+        prediction = self.model.predict(X_text)
+
+        if len(prediction) == 0:
+            return "Không thể dự đoán"  
+
+        label = prediction[0]  # Lấy nhãn dự đoán
+
+        # Kiểm tra nhãn
+        if self.dataset_name in ["IMDb Review", "Yelp Review", "Amazon Review"]:
+            return "Tích cực" if label == 1 else "Tiêu cực"
+    
+        return f"Dự đoán nhãn: {label}"

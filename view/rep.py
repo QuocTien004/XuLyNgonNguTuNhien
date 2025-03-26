@@ -6,11 +6,12 @@ def representation_view():
     st.title("Biểu Diễn Dữ Liệu")
 
     # Chọn cách nhập dữ liệu
-    input_type = st.radio("Chọn nguồn dữ liệu:", ("Nhập dữ liệu", "Tải file (.txt)"))
+    # input_type = st.radio("Nguồn dữ liệu:", ("Nhập dữ liệu", "Tải file (.txt)"))
+    input_type = "Nhập dữ liệu"
 
     text_data = []
     if input_type == "Nhập dữ liệu":
-        input_text = st.text_area("Nhập dữ liệu (mỗi dòng là một mẫu):", height=200)
+        input_text = st.text_area("Nhập dữ liệu:", height=200)
         text_data = input_text.split("\n") if input_text else []
     elif input_type == "Tải file dữ liệu (.txt)":
         uploaded_file = st.file_uploader("Chọn file .txt", type="txt")

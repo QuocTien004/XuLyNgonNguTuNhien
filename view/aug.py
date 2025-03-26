@@ -5,7 +5,7 @@ def augmentation_view():
     st.title("Tăng cường dữ liệu")  
 
     # Chọn cách nhập dữ liệu
-    option = st.radio("Chọn nguồn nhập dữ liệu:", ("Nhập văn bản", "Tải file văn bản"))
+    option = st.radio("Nguồn nhập dữ liệu:", ("Nhập văn bản", "Tải file văn bản"))
 
     text = ""
 

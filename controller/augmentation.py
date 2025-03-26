@@ -3,13 +3,11 @@ from transformers import MarianMTModel, MarianTokenizer
 
 class DataAugmentation:
     def __init__(self):
-        """Khởi tạo các bộ tăng cường dữ liệu NLP"""
         self.synonym_aug = naw.SynonymAug(aug_src="wordnet") 
         self.swap_aug = naw.RandomWordAug(action="swap") 
         self.delete_aug = naw.RandomWordAug(action="delete") 
 
         self.insert_aug = naw.ContextualWordEmbsAug(model_path='bert-base-uncased', action="insert", aug_p=0.3)
-
 
         self.translator_en_de = MarianMTModel.from_pretrained("Helsinki-NLP/opus-mt-en-de")
         self.tokenizer_en_de = MarianTokenizer.from_pretrained("Helsinki-NLP/opus-mt-en-de")
@@ -30,11 +28,11 @@ class DataAugmentation:
         return self.delete_aug.augment(text)[0]
 
     def insert_words(self, text):
-        """Thêm từ ngẫu nhiên vào văn bản"""
+        """Thêm từ ngẫu nhiên"""
         return self.insert_aug.augment(text)[0]
 
     def back_translation(self, text):
-        """Dịch ngược bằng mô hình Helsinki-NLP"""
+        """Dịch ngược"""
         if isinstance(text, str):  
             text = [text][0]
 

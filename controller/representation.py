@@ -1,4 +1,5 @@
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.preprocessing import OneHotEncoder
 import numpy as np
 import pandas as pd
 from gensim.models import Word2Vec, FastText
@@ -14,12 +15,11 @@ class DataRepresentation:
         self.vectorizer = None
         self.word2vec_model = None
         self.fasttext_model = None
-        self.nlp = None
+        self.glove_model = None
 
     def fit_transform(self, texts):
-        """Chọn phương pháp biểu diễn dữ liệu phù hợp và thực hiện biến đổi."""
         if not texts:
-            return "Không có dữ liệu để biểu diễn!"
+            return "Không có dữ liệu!"
 
         method_map = {
             "count": self._count_vectorizer,
@@ -42,95 +42,98 @@ class DataRepresentation:
         """Bag of Words sử dụng CountVectorizer."""
         self.vectorizer = CountVectorizer(binary=False)
         transformed = self.vectorizer.fit_transform(texts)
-        feature_names = self.vectorizer.get_feature_names_out()  
+        feature_names = self.vectorizer.get_feature_names_out()
         return self._to_dataframe(transformed, feature_names)
 
     def _onehot_encoding(self, texts):
-        """One-hot encoding = CountVectorizer(binary=True)."""
-        self.vectorizer = CountVectorizer(binary=True)
-        transformed = self.vectorizer.fit_transform(texts)
-        feature_names = self.vectorizer.get_feature_names_out() 
+        """One-hot encoding chính xác"""
+        words = [text.split() for text in texts]
+        words_flatten = [[word] for sentence in words for word in sentence]
+
+        encoder = OneHotEncoder(sparse_output=False)
+        transformed = encoder.fit_transform(words_flatten)
+
+        feature_names = encoder.get_feature_names_out()
         return self._to_dataframe(transformed, feature_names)
 
     def _bag_of_ngram(self, texts):
-        """Bag of N-grams (n=1,2)."""
+        """Bag of N-grams"""
         self.vectorizer = CountVectorizer(ngram_range=(1, 2))
         transformed = self.vectorizer.fit_transform(texts)
-        feature_names = self.vectorizer.get_feature_names_out()  
+        feature_names = self.vectorizer.get_feature_names_out()
         return self._to_dataframe(transformed, feature_names)
 
     def _tfidf_vectorizer(self, texts):
-        """TF-IDF Vectorization."""
+        """TF-IDF"""
         self.vectorizer = TfidfVectorizer()
         transformed = self.vectorizer.fit_transform(texts)
-        feature_names = self.vectorizer.get_feature_names_out()  
+        feature_names = self.vectorizer.get_feature_names_out()
         return self._to_dataframe(transformed, feature_names)
 
-
     def _word2vec_embedding(self, texts):
-        """Word2Vec embedding."""
+        """Word2Vec"""
         tokenized_texts = [text.split() for text in texts]
         self.word2vec_model = Word2Vec(sentences=tokenized_texts, vector_size=100, window=5, min_count=1, workers=4)
         embeddings = [np.mean([self.word2vec_model.wv[word] for word in text if word in self.word2vec_model.wv]
                               or [np.zeros(100)], axis=0) for text in tokenized_texts]
-        feature_names = [f"feat_{i}" for i in range(len(embeddings[0]))]  
+        feature_names = [f"feat_{i}" for i in range(len(embeddings[0]))]
         return self._to_dataframe(np.array(embeddings), feature_names)
 
     def _glove_embedding(self, texts):
-        """GloVe embedding dùng api."""
-        self.nlp = api.load("glove-wiki-gigaword-100")
-        embeddings = [np.mean([self.nlp.get_vector(word) for word in text.split() if word in self.nlp], axis=0) for text in texts]
-        feature_names = [f"feat_{i}" for i in range(len(embeddings[0]))]  
-        return self._to_dataframe(np.array(embeddings), feature_names) 
+        """GloVe"""
+        if self.glove_model is None:
+            self.glove_model = api.load("glove-wiki-gigaword-100")
+
+        embeddings = []
+        for text in texts:
+            word_vectors = [self.glove_model.get_vector(word) for word in text.split() if word in self.glove_model]
+            if word_vectors:
+                embeddings.append(np.mean(word_vectors, axis=0))
+            else:
+                embeddings.append(np.zeros(100))  
+
+        feature_names = [f"feat_{i}" for i in range(len(embeddings[0]))]
+        return self._to_dataframe(np.array(embeddings), feature_names)
 
     def _fasttext_embedding(self, texts):
-        """FastText embedding."""
+        """FastText"""
         tokenized_texts = [text.split() for text in texts]
         self.fasttext_model = FastText(sentences=tokenized_texts, vector_size=100, window=5, min_count=1, workers=4)
         embeddings = [np.mean([self.fasttext_model.wv[word] for word in text if word in self.fasttext_model.wv]
                               or [np.zeros(100)], axis=0) for text in tokenized_texts]
-        feature_names = [f"feat_{i}" for i in range(len(embeddings[0]))]  
+        feature_names = [f"feat_{i}" for i in range(len(embeddings[0]))]
         return self._to_dataframe(np.array(embeddings), feature_names)
-    
-    
 
     def _bert_embedding(self, texts):
-        """Biểu diễn văn bản bằng BERT."""
+        """BERT"""
         tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
         model = BertModel.from_pretrained("bert-base-uncased")
         return self._transform_transformer(texts, tokenizer, model)
 
-    def _roberta_embedding(self, texts):
-        """Biểu diễn văn bản bằng RoBERTa."""
-        tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
-        model = RobertaModel.from_pretrained("roberta-base")
-        return self._transform_transformer(texts, tokenizer, model)
-    
-
     def _chatgpt_embedding(self, texts):
-        """Biểu diễn văn bản bằng GPT-2."""
+        """GPT-2"""
         tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
         tokenizer.pad_token = tokenizer.eos_token
         model = GPT2Model.from_pretrained("gpt2")
         return self._transform_transformer(texts, tokenizer, model)
-    
-    
+
     def _transform_transformer(self, texts, tokenizer, model):
         """Chuyển đổi văn bản sang embeddings từ Transformer models (BERT, RoBERTa)."""
         tokens = tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
         with torch.no_grad():
             outputs = model(**tokens)
-        embeddings = outputs.last_hidden_state.mean(dim=1).numpy()
+
+        embeddings = outputs.last_hidden_state.mean(dim=1).cpu().numpy()
         feature_names = [f"feat_{i}" for i in range(embeddings.shape[1])]
         return self._to_dataframe(embeddings, feature_names)
-    
 
     def _to_dataframe(self, transformed, feature_names):
-            if isinstance(transformed, np.ndarray):
-                df = pd.DataFrame(transformed, columns=feature_names)
-            elif isinstance(transformed, csr_matrix):  
-                df = pd.DataFrame(transformed.toarray(), columns=feature_names)
-            else:
-                raise ValueError("Dữ liệu không hợp lệ, chỉ hỗ trợ numpy array hoặc sparse matrix!")
+        """Chuyển đổi dữ liệu thành DataFrame"""
+        if isinstance(transformed, np.ndarray):
+            df = pd.DataFrame(transformed, columns=feature_names)
+        elif isinstance(transformed, csr_matrix):
+            df = pd.DataFrame(transformed.toarray(), columns=feature_names)
+        else:
+            raise ValueError("Dữ liệu không hợp lệ!")
 
-            return df
+        return df

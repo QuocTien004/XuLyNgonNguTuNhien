@@ -21,14 +21,13 @@ def classification_view():
         progress_bar = st.progress(0)  
     
         accuracy, train_time = classifier.train_model(progress_bar)  
-        st.success(f"Mô hình '{model_type}' đạt độ chính xác: {accuracy * 100:.4f}%")
-        st.write(f"Thời gian huấn luyện: {train_time:.4f} giây")
+        st.success(f"Độ chính xác: {accuracy * 100:.2f}%")
 
         st.session_state["classifier"] = classifier
 
     # Phần dự đoán văn bản mới
-    st.markdown("### Dự đoán văn bản mới")
-    user_input = st.text_area("Nhập văn bản cần phân loại", "")
+    st.markdown("### Dự đoán")
+    user_input = st.text_area("Nhập văn bản muốn phân loại", "")
 
     if st.button("Dự đoán"):
         if "classifier" in st.session_state:

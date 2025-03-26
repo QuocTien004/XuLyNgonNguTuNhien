@@ -7,7 +7,7 @@ def preprocessor_view():
     st.write("Nhập dữ liệu hoặc tải lên file")
 
     # Chọn cách nhập dữ liệu
-    option = st.radio("Chọn nguồn nhập dữ liệu:", ("Nhập dữ liệu", "Tải file"))
+    option = st.radio("Nguồn nhập dữ liệu:", ("Nhập dữ liệu", "Tải file"))
 
     text = ""
     if option == "Nhập dữ liệu":
@@ -31,7 +31,7 @@ def preprocessor_view():
             ]
         )
 
-        if st.button("Thực hiện"):
+        if st.button("Thực hiện", key="run_button"):
             if text.strip():
                 st.subheader("Kết quả Xử Lý")
                 processed_text = "**Kết quả tiền xử lý:**\n\n"
