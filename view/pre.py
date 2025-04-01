@@ -12,7 +12,8 @@ def preprocessor_view():
     text = ""
     if option == "Nhập dữ liệu":
         text = st.text_area("Nhập dữ liệu của bạn tại đây:", height=200)
-    elif option == "Tải file dữ liệu":
+
+    elif option == "Tải file":
         uploaded_file = st.file_uploader("Chọn file .txt", type="txt")
         if uploaded_file:
             text = uploaded_file.read().decode("utf-8")

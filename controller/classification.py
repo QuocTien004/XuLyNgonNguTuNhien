@@ -14,7 +14,6 @@ from sklearn.utils import shuffle
 
 class TextClassifier:
     def __init__(self, dataset_name, model_type):
-        """Khởi tạo bộ phân loại văn bản"""
         self.dataset_name = dataset_name
         self.model_type = model_type
         self.vectorizer = TfidfVectorizer(max_features=5000)  
@@ -87,29 +86,16 @@ class TextClassifier:
 
         self.model = model_mapping[self.model_type]
 
-        num_batches = 10 
-        batch_size = X_train.shape[0] // num_batches
-
-        X_train, y_train = shuffle(X_train, y_train, random_state=42)
-
-        # Huấn luyện mô hình 
-        for i in range(num_batches):
-            batch_start = i * batch_size
-            batch_end = (i + 1) * batch_size if (i + 1) * batch_size < X_train.shape[0] else X_train.shape[0]
-            
-            self.model.partial_fit(X_train[batch_start:batch_end], y_train[batch_start:batch_end], classes=np.unique(y_train))  
-            
-            if progress_bar:
-                progress_bar.progress((i + 1) / num_batches)  
-            time.sleep(0.2) 
+        # Huấn luyện mô hình trên toàn bộ dữ liệu
+        self.model.fit(X_train, y_train)
 
         train_time = time.time() - start_time  
 
-        # độ chính xác
+        # Đánh giá mô hình
         y_pred = self.model.predict(X_test)
         accuracy = accuracy_score(y_test, y_pred)
 
-        return accuracy, train_time 
+        return accuracy, train_time
 
     def simulate_training_step(self, progress_bar, train_time):
         """Cập nhật progress bar theo thời gian train thực tế"""

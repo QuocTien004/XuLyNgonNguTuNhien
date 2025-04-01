@@ -6,15 +6,14 @@ def representation_view():
     st.title("Biểu Diễn Dữ Liệu")
 
     # Chọn cách nhập dữ liệu
-    # input_type = st.radio("Nguồn dữ liệu:", ("Nhập dữ liệu", "Tải file (.txt)"))
-    input_type = "Nhập dữ liệu"
+    input_type = st.radio("Nguồn dữ liệu:", ("Nhập dữ liệu", "Tải file (.txt)"))
 
     text_data = []
     if input_type == "Nhập dữ liệu":
         input_text = st.text_area("Nhập dữ liệu:", height=200)
         text_data = input_text.split("\n") if input_text else []
-    elif input_type == "Tải file dữ liệu (.txt)":
-        uploaded_file = st.file_uploader("Chọn file .txt", type="txt")
+    elif input_type == "Tải file (.txt)":
+        uploaded_file = st.file_uploader("Chọn file .txt", type="txt", key="file_upload_key")
         if uploaded_file:
             text_data = uploaded_file.read().decode("utf-8").split("\n")
 
@@ -22,7 +21,7 @@ def representation_view():
     method = st.radio("Chọn phương pháp biểu diễn:", [
         "One-hot Encoding", "CountVectorizer", "Bag of N-grams",
         "TF-IDF Vectorizer", "Word2Vec Embedding", "GloVe Embedding",
-        "FastText Embedding", "ChatGPT Embedding", "BERT Embedding"
+        "FastText Embedding", "ChatGPT Embedding"
     ])
 
     if st.button("Biểu diễn dữ liệu"):
