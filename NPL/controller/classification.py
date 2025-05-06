@@ -13,16 +13,20 @@ import time
 from sklearn.utils import shuffle 
 
 class TextClassifier:
-    def __init__(self, dataset_name, model_type):
+    def __init__(self, dataset_name=None, model_type=None, file_path=None):
         self.dataset_name = dataset_name
         self.model_type = model_type
+        self.file_path = file_path
         self.vectorizer = TfidfVectorizer(max_features=5000)  
         self.model = None
 
         self.text_column = None
         self.label_column = None
 
-        self._load_dataset()
+        if self.file_path:
+            self._load_from_file()
+        else:
+            self._load_dataset()
     
     def _load_dataset(self):
         """Tải dataset từ Hugging Face"""
@@ -57,22 +61,38 @@ class TextClassifier:
         if not self.text_column or not self.label_column:
             raise ValueError("Không xác định được cột văn bản hoặc nhãn!")
 
-        # Lấy dữ liệu
         self.train_texts, self.train_labels = dataset["train"][self.text_column], dataset["train"][self.label_column]
         self.test_texts, self.test_labels = dataset["test"][self.text_column], dataset["test"][self.label_column]
+
+    def _load_from_file(self):
+        """Tải dữ liệu từ file CSV hoặc TXT"""
+        if self.file_path.endswith(".csv"):
+            df = pd.read_csv(self.file_path)
+        elif self.file_path.endswith(".txt"):
+            with open(self.file_path, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+            df = pd.DataFrame(lines, columns=["text"])
+            df["label"] = 0  # Giả định tất cả là một nhãn (cần chỉnh sửa)
+        else:
+            raise ValueError("Định dạng file không được hỗ trợ!")
+        
+        if "text" not in df.columns or "label" not in df.columns:
+            raise ValueError("File phải có cột 'text' và 'label'")
+        
+        self.train_texts, self.test_texts, self.train_labels, self.test_labels = train_test_split(
+            df["text"], df["label"], test_size=0.2, random_state=42
+        )
 
     def train_model(self, progress_bar):
         """Huấn luyện mô hình"""
         start_time = time.time()
 
-        # Vector hóa dữ liệu
         X_train = self.vectorizer.fit_transform(self.train_texts)
         X_test = self.vectorizer.transform(self.test_texts)
 
         y_train = np.array(self.train_labels)
         y_test = np.array(self.test_labels)
 
-        # Chọn mô hình 
         model_mapping = {
             "Naive Bayes": MultinomialNB(),
             "Logistic Regression": LogisticRegression(max_iter=200),
@@ -85,24 +105,14 @@ class TextClassifier:
             raise ValueError("Thuật toán không hợp lệ!")
 
         self.model = model_mapping[self.model_type]
-
-        # Huấn luyện mô hình trên toàn bộ dữ liệu
         self.model.fit(X_train, y_train)
 
         train_time = time.time() - start_time  
 
-        # Đánh giá mô hình
         y_pred = self.model.predict(X_test)
         accuracy = accuracy_score(y_test, y_pred)
 
         return accuracy, train_time
-
-    def simulate_training_step(self, progress_bar, train_time):
-        """Cập nhật progress bar theo thời gian train thực tế"""
-        step_duration = train_time / 100 
-        for i in range(1, 101):
-            time.sleep(step_duration)
-            progress_bar.progress(i / 100.0) 
 
     def predict(self, text):
         """Dự đoán phân loại văn bản"""
@@ -115,9 +125,8 @@ class TextClassifier:
         if len(prediction) == 0:
             return "Không thể dự đoán"  
 
-        label = prediction[0]  # Lấy nhãn dự đoán
+        label = prediction[0]
 
-        # Kiểm tra nhãn
         if self.dataset_name in ["IMDb Review", "Yelp Review", "Amazon Review"]:
             return "Tích cực" if label == 1 else "Tiêu cực"
     
