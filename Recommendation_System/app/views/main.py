@@ -8,7 +8,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from app.controllers.movie_controller import MovieController
 from app.controllers.recommendation_controller import RecommendationController
-from app.utils.youtube_utils import API_CALLS, MAX_API_CALLS
 
 st.set_page_config(page_title="Hệ thống Gợi ý Phim", layout="wide")
 
