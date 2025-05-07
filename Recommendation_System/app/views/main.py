@@ -9,65 +9,65 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 from app.controllers.movie_controller import MovieController
 from app.controllers.recommendation_controller import RecommendationController
 
-st.set_page_config(page_title="Hệ thống Gợi ý Phim", layout="wide")
+st.set_page_config(page_title="Movie Recommendation System", layout="wide")
 
 # Khởi tạo controllers
 movie_controller = MovieController()
 recommendation_controller = RecommendationController()
 
-# Sidebar - Thanh chọn nút
-st.sidebar.title("Chọn trang")
-page = st.sidebar.radio("Chọn chức năng", ["Trang chủ", "Danh sách phim", "Gợi ý phim"])
+# Sidebar
+st.sidebar.title("Movie Recommendation System")
+page = st.sidebar.selectbox("Choose a page", ["Home", "Movies", "Recommendations"])
 
-# Trang chủ
-if page == "Trang chủ":
-    st.title("Hệ thống Gợi ý Phim")
-    st.markdown("Chào mừng bạn đến với hệ thống gợi ý phim!")
+if page == "Home":
+    st.title("Welcome to Movie Recommendation System")
+    st.write("Discover new movies based on your preferences!")
 
-# Danh sách phim
-if page == "Danh sách phim":
-    st.title("Danh sách phim")
-    st.markdown("Tìm kiếm và xem thông tin phim.")
-
-    search_query = st.text_input("🔍 Nhập tên phim cần tìm")
-    user_id = st.text_input("Nhập ID người dùng")
-
+elif page == "Movies":
+    st.title("Movies")
+    
+    # Search movies
+    search_query = st.text_input("Search movies")
     if search_query:
         movies = movie_controller.search_movies(search_query)
-        if not movies:
-            st.warning("Không tìm thấy phim với tên này. Vui lòng thử lại.")
         for movie in movies:
             year_str = f" ({movie['year']})" if movie['year'] > 0 else ""
-            st.markdown("---")
-            with st.container():
-                cols = st.columns([2, 1])
+            with st.expander(f"{movie['title']}{year_str}"):
+                # Display only summary and rating
+                st.write(f"**Rating:** {movie['vote_average']}/10")
+                
+                # Rating and review (optional)
+                rating = st.slider("Rate this movie", 1, 10, 5, key=f"rating_{movie['id']}")
+                review = st.text_area("Write a review", key=f"review_{movie['id']}")
+                if st.button("Submit Review", key=f"submit_{movie['id']}"):
+                    movie_controller.add_review(movie['id'], rating, review)
+                    st.success("Review submitted successfully!")
 
-                with cols[0]:
-                    st.markdown(f"### {movie['title']}{year_str}")
-                    st.markdown(f"**Tóm tắt:** {movie['overview']}")
-
-                with cols[1]:
-                    with st.expander("Đánh giá"):
-                        st.markdown(f"**Đánh giá hiện tại:** {movie['vote_average']}/10")
-                        rating = st.slider("Đánh giá phim", 1, 10, 5, key=f"rating_{movie['id']}")
-                        
-                        # Thêm phần nhập đánh giá chi tiết
-                        review = st.text_area("Nhập đánh giá chi tiết của bạn (Tùy chọn)", "")
-                        
-                        if st.button("Gửi", key=f"submit_{movie['id']}"):
-                            user_id_clean = str(user_id).strip()
-                            if not user_id_clean:
-                                st.warning("Vui lòng nhập ID người dùng trước khi gửi đánh giá.")
-                            elif not rating:
-                                st.warning("Vui lòng chọn đánh giá phim.")
-                            else:
-                                movie_controller.add_review(movie['id'], rating, review, user_id_clean)
-                                st.success("Cảm ơn bạn đã gửi đánh giá!")
-                                # Thêm phần hiển thị các đánh giá hiện tại
-                                reviews = movie_controller.get_movie_reviews(movie['id'])
-                                if reviews:
-                                    st.markdown("### Đánh giá hiện tại:")
-                                    for rev in reviews:
-                                        st.markdown(f"**User {rev['userId']}**: {rev['rating']}/10 - {rev['review']}")
-                                else:
-                                    st.markdown("Chưa có đánh giá nào.")
+elif page == "Recommendations":
+    st.title("Movie Recommendations")
+    
+    # Select recommendation type
+    rec_type = st.selectbox(
+        "Choose recommendation type",
+        ["Collaborative Filtering", "Content-based Filtering", "Hybrid Filtering"]
+    )
+    
+    if rec_type == "Collaborative Filtering":
+        recommendations = recommendation_controller.get_collaborative_recommendations()
+    elif rec_type == "Content-based Filtering":
+        recommendations = recommendation_controller.get_content_based_recommendations()
+    else:
+        recommendations = recommendation_controller.get_hybrid_recommendations()
+    
+    # Display recommendations with summary and rating only
+    for movie in recommendations:
+        year_str = f" ({movie['year']})" if movie['year'] > 0 else ""
+        with st.expander(f"{movie['title']}{year_str}"):
+            st.write(f"**Rating:** {movie['vote_average']}/10")
+            
+            # Rating and review (optional)
+            rating = st.slider("Rate this movie", 1, 10, 5, key=f"rating_{movie['id']}")
+            review = st.text_area("Write a review", key=f"review_{movie['id']}")
+            if st.button("Submit Review", key=f"submit_{movie['id']}"):
+                movie_controller.add_review(movie['id'], rating, review)
+                st.success("Review submitted successfully!")
