@@ -1,0 +1,19 @@
+{
+    "intents": [
+        {
+            "tag": "greeting",
+            "patterns": ["Chào bạn", "Xin chào", "Hello", "Hi"],
+            "responses": ["Chào bạn! Bạn cần tôi giúp gì?", "Xin chào! Tôi có thể giúp gì cho bạn?"]
+        },
+        {
+            "tag": "goodbye",
+            "patterns": ["Tạm biệt", "Chào tạm biệt", "Bye", "See you"],
+            "responses": ["Tạm biệt, hẹn gặp lại!", "Chúc bạn một ngày tốt lành!"]
+        },
+        {
+            "tag": "thanks",
+            "patterns": ["Cảm ơn", "Cảm ơn bạn", "Thank you"],
+            "responses": ["Rất vui được giúp bạn!", "Không có gì, luôn sẵn sàng giúp đỡ!"]
+        }
+    ]
+}
