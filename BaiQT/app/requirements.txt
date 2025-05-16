@@ -1,0 +1,25 @@
+nlpaug
+transformers
+pandas
+numpy
+scikit-learn
+datasets
+requests
+selenium
+webdriver-manager
+beautifulsoup4
+spacy
+nltk
+contractions
+matplotlib
+seaborn
+pyspellchecker
+gensim
+scipy
+torch
+streamlit
+sentencepiece
+chatterbot
+sentence-transformers
+spacy
+en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.5.0/en_core_web_sm-3.5.0.tar.gz
